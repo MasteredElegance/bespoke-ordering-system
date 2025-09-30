@@ -118,10 +118,20 @@ create policy "slots_update_auth"
   using (true)
   with check (true);
 
--- Optional: restrict insert/delete to authenticated (admin UIs)
-drop policy if exists "slots_write_auth" on public.schedule_slots;
-create policy "slots_write_auth"
+-- Schedule slots: insert & delete (one command per policy)
+
+-- INSERT
+drop policy if exists "slots_insert_auth" on public.schedule_slots;
+create policy "slots_insert_auth"
   on public.schedule_slots
-  for insert, delete
+  for insert
   to authenticated
   with check (true);
+
+-- DELETE
+drop policy if exists "slots_delete_auth" on public.schedule_slots;
+create policy "slots_delete_auth"
+  on public.schedule_slots
+  for delete
+  to authenticated
+  using (true);
