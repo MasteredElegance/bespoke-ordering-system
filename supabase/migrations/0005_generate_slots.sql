@@ -47,3 +47,22 @@ begin
   return inserted;
 end;
 $$;
+-- RLS: make INSERTs into reservations explicit for authenticated users
+-- (We already have the owner policy, but this makes intent crystal clear and
+-- avoids editor/role simulation surprises.)
+
+-- Ensure the role has table grants (harmless if repeated)
+grant select, insert, update on public.reservations to authenticated;
+
+-- Insert only when reservation.customer_id belongs to the logged-in user
+drop policy if exists "reservations_insert_auth" on public.reservations;
+create policy "reservations_insert_auth"
+  on public.reservations
+  for insert
+  to authenticated
+  with check (
+    customer_id in (
+      select c.id from public.customers c
+      where c.user_id = auth.uid()
+    )
+  );
