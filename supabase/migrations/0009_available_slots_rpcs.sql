@@ -1,5 +1,7 @@
+-- 0009_available_slots_rpcs.sql
+-- RPC wrappers for available slots
+
 -- A) RPC: rpc_get_available_slots(dfrom, dto)
--- Thin wrapper over public.get_available_slots for PostgREST
 create or replace function public.rpc_get_available_slots(
   dfrom date,
   dto   date
@@ -19,7 +21,7 @@ as $$
 $$;
 
 
--- B) RPC with location filter (optional): rpc_get_available_slots_by_location
+-- B) RPC with location filter
 create or replace function public.rpc_get_available_slots_by_location(
   dfrom date,
   dto   date,
@@ -41,15 +43,3 @@ as $$
   where (p_location is null or s.location = p_location)
   order by s.starts_at;
 $$;
-
-
--- C) Helpful policy for read-only access (if you want anon/auth to read)
--- Comment these out if you prefer server-only access.
-do $$
-begin
-  -- enable RLS if not already
-  perform 1 from pg_class c join pg_namespace n on n.oid=c.relnamespace
-   where n.nspname='public' and c.relname='schedule_slots' and c.relrowsecurity;
-  -- expose only SELECT via RPCs and view is safe (function is STABLE, no writes)
-  -- Nothing to do if your API role already can execute functions.
-end $$;
